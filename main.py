@@ -12,10 +12,10 @@ class Minesweeper:
         self.initial_opened_cells = initial_opened_cells
 
         self.opened_cells = 0
-        self.isFinished = False
+        self.is_finished = False
 
         self.board = [[0 for _ in range(self.width)] for _ in range(self.height)]
-        # 0 = closed, 1 = opened
+        # 0 = closed, 1 = opened, 2 = flag
         self.bombs = [[0 for _ in range(self.width)] for _ in range(self.height)]
         # 0 = empty, -1 = bomb, numbers = number of neighboring bombs
 
@@ -27,8 +27,10 @@ class Minesweeper:
             print('\n' + label, end='  ')
             # if the cell is not opened, print '-' and if the cell is opened, print the num of neighboring bombs
             for m in range(self.width):
-                if self.board[n][m] == 0:
+                if self.board[n][m] == 0:  # closed
                     print('-  ', end='')
+                elif self.board[n][m] == 2:  # flag
+                    print('F  ', end='')
                 else:
                     if self.bombs[n][m] == 0:
                         print('   ', end='')
@@ -54,7 +56,6 @@ class Minesweeper:
                 self.bombs[n][m] = self.get_num_of_neighboring_bombs(n, m)
 
     def get_num_of_neighboring_bombs(self, row, column):
-        # Todo: return number of bombs eight direction
         if self.bombs[row][column] == -1:
             return -1  # if it's bomb, return -1
         num = 0
@@ -66,50 +67,104 @@ class Minesweeper:
         return num  # check neighboring cells in 8 direction and return the number of bombs
 
     def dig(self, row, column):
-        # Todo: open the cell and check if it's bomb, if not, check neighboring cells if needed
-        if self.bombs[row][column] == -1:
-            pass  # write a code to finish game
-        elif self.bombs[row][column] != 0:
-            self.board[row][column] = 1
-            self.opened_cells += 1
-        else:  # if the cell is not bombs and there is no bombs in eight directions
-            self.board[row][column] = 1
-            self.opened_cells += 1
-            for a in range(-1, 2):
-                for b in range(-1, 2):
-                    if self.height > row + a >= 0 and self.width > column + b >= 0 \
-                            and self.board[row + a][column + b] == 0:  # if neighboring cell is not opened
-                        self.dig(row + a, column + b)  # dig that cell
+        if self.board[row][column] == 2:
+            print('This cell is flaged')
+        elif self.board[row][column] == 1:
+            pass
+        else:
+            if self.bombs[row][column] == -1:
+                print('You dug a bomb')
+                self.board = [[1 for _ in range(self.width)] for _ in range(self.height)]
+                self.display_board()
+                self.is_finished = True
+            elif self.bombs[row][column] == 0:
+                self.board[row][column] = 1
+                self.opened_cells += 1
+                for a in range(-1, 2):
+                    for b in range(-1, 2):
+                        if self.height > row + a >= 0 and self.width > column + b >= 0 \
+                                and self.board[row + a][column + b] == 0:  # if neighboring cell is not opened
+                            self.dig(row + a, column + b)  # dig that cell
+                        else:
+                            pass
+            else:  # if the cell is not bombs and there is no bombs in eight directions
+                self.board[row][column] = 1
+                self.opened_cells += 1
 
     def start_game(self):
-        # Todo: prints board for the first time. if the chosen cell has bomb or the opened cells are not many,
-        #  create again
+        # prints board for the first time. if the chosen cell has bomb or the opened cells are not many, create again
         self.display_board()
-        user_input = input("Choose the cell (row column) ex. Ac\n")
-        user_input = user_input.lower()
-        selected = [ord(user_input[0]) - 97, ord(user_input[1]) - 97]  # row, column
         while True:
+            user_input = input("Choose the cell (row column) ex. Ac\n")
+            user_input = user_input.lower()
+            try:
+                selected = [ord(user_input[0]) - 97, ord(user_input[1]) - 97]  # row, column
+                _ = self.bombs[selected[0]][selected[1]]
+                break
+            except IndexError:
+                print('Enter Valid Coordinate')
+        finished_making_board = False
+        while not finished_making_board:
             self.make_board()
-            if self.bombs[selected[0]][selected[1]] == -1:
+            if self.bombs[selected[0]][selected[1]] != 0:
                 self.bombs = [[0 for _ in range(self.width)] for _ in range(self.height)]  # reset board
-                pass  # recreate board if selected cell is bombs
             else:
                 self.dig(selected[0], selected[1])
                 if self.opened_cells < self.initial_opened_cells:
+                    self.board = [[0 for _ in range(self.width)] for _ in range(self.height)]
                     self.bombs = [[0 for _ in range(self.width)] for _ in range(self.height)]
-                    pass  # recreate board if enough cells are not opened
+                    self.opened_cells = 0  # recreate board if enough cells are not opened
                 else:
-                    break
+                    finished_making_board = True
 
-    def place_flag(self):
-        # Todo: put flag on a selected cell
-        pass
+    def place_flag(self, row, column):
+        # put flag on a selected cell
+        if self.board[row][column] == 2:
+            self.board[row][column] = 0
+        else:
+            self.board[row][column] = 2
 
     def play_game(self):
         self.start_game()
-        while not self.isFinished:
+        while not self.is_finished:
             self.display_board()
-            break
+
+            choice_dig = False
+            choice_flag = False
+            while True:
+                user = input('Enter command: Dig / Place (remove) a flag / Exit from the game\nd/f/exit\n')
+                if user == 'exit':
+                    self.is_finished = True
+                    return 0
+                elif user == 'd':
+                    choice_dig = True
+                    break
+                elif user == 'f':
+                    choice_flag = True
+                    break
+                else:
+                    print('Enter valid command')
+
+            while True:
+                user_input = input("Choose the cell (row column) ex. Ac\n")
+                try:
+                    user_input = user_input.lower()
+                    selected = [ord(user_input[0]) - 97, ord(user_input[1]) - 97]  # row, column
+                    if choice_dig:
+                        self.dig(selected[0], selected[1])
+                    elif choice_flag:
+                        self.place_flag(selected[0], selected[1])
+                    else:
+                        pass
+                    break
+                except IndexError:
+                    print('Enter Valid Coordinate')
+
+            if self.opened_cells >= (self.height * self.width - self.num_of_bombs):  # if all bombs are detected
+                print("Congratulation! You found all bombs!")
+                self.board = [[1 for _ in range(self.width)] for _ in range(self.height)]
+                self.display_board()
+                self.is_finished = True
 
 
 print('# # ### ### ###  ## # # ### ### ### ### ##  ')
@@ -118,20 +173,28 @@ print('###  #  # # ##   #  ### ##  ##  ### ##  ##  ')
 print('# #  #  # # #     # ### #   #   #   #   # # ')
 print('# # ### # # ### ##  # # ### ### #   ### # # ')
 
-print('\nChoose level')
-
-level_list = [[10, 8, 10, 10], [18, 14, 40, 0], [24, 20, 99, 0], [3, 3, 1, 0]]
+level_list = [[10, 8, 10, 13], [18, 14, 40, 17], [24, 20, 99, 37]]
 # width, height, num_of_bombs, initial_opened_cells
+restart = True
 
-while True:
-    level = input('0: Easy, 1: Medium, 2: Hard\n')  # A user will choose level
-    try:
-        level = int(level)
-        new_game = Minesweeper(level_list[level][0], level_list[level][1], level_list[level][2], level_list[level][3])
-        break
-    except IndexError:
-        print('Choose Valid Level')
-    except ValueError:
-        print('Choose Valid Level')
+while restart:
+    print('\nChoose level')
 
-new_game.play_game()
+    while True:
+        level = input('0: Easy, 1: Medium, 2: Hard\n')  # A user will choose level
+        try:
+            level = int(level)
+            new_game = Minesweeper(level_list[level][0], level_list[level][1],
+                                   level_list[level][2], level_list[level][3])
+            break
+        except IndexError:
+            print('Choose Valid Level')
+        except ValueError:
+            print('Choose Valid Level')
+
+    new_game.play_game()
+
+    user_choice = input('Restart? y/n\n')
+    if user_choice != 'y':
+        print('Thank you for playing!')
+        restart = False
