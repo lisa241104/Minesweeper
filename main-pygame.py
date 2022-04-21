@@ -1,8 +1,9 @@
 from pygame_minesweeper import PygameMinesweeper
+import pygame as pg
 
 
 def main_pygame():
-    test = PygameMinesweeper(10, 10, 0, 0, (20, 20))
+    test = PygameMinesweeper(10, 8, 10, 13, (20, 20))
     test.play_game()
 
 
