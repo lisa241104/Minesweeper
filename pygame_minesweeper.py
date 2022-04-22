@@ -10,19 +10,18 @@ class PygameMinesweeper(Minesweeper):
 
         # initialize pygame
         pg.init()
-        self.screen = pg.display.set_mode((800, 600))
+        self.screen = pg.display.set_mode((self.width*30+margin[0]*2, self.height*30+margin[1]*2))
 
         # Margin of the board
         self.margin = margin
         # Positions of Cells that are calculated from row and column number
         self.positions = \
-            [[(15 + margin[0] + 30 * a, 15 + margin[1] + 30 * b) for a in range(self.width)] for b in
-             range(self.height)]
+            [[(15 + margin[0] + 30 * a, 15 + margin[1] + 30 * b) for a in range(self.width)]
+             for b in range(self.height)]
         # list of instance of Cell class
         self.cells = \
-            [[Cell(pos=self.positions[r][c], row=r, column=c) for c in range(self.width)] for r in range(self.height)]
-
-        self.screen = pg.display.set_mode((800, 600))
+            [[Cell(pos=self.positions[r][c], row=r, column=c) for c in range(self.width)]
+             for r in range(self.height)]
 
         self.game_started = False
         self.mouse_down = False
@@ -66,7 +65,7 @@ class PygameMinesweeper(Minesweeper):
 
     # parent class' get_num_of_neighboring_bombs()
 
-    def dig(self, row, column):  # TODO: add the method to change the all cells' images
+    def dig(self, row, column):
         cell = self.cells[row][column]
         if self.board[row][column] == 2:
             # if the cell is already flagged
@@ -92,8 +91,7 @@ class PygameMinesweeper(Minesweeper):
                 self.board[row][column] = 1
                 self.opened_cells += 1
 
-        if not self.game_started:
-            cell.revealed(self.screen)
+        cell.revealed(self.screen)
 
     def place_flag(self, row, column):
         # put flag on a selected cell
@@ -127,8 +125,8 @@ class PygameMinesweeper(Minesweeper):
                     if event.button == 3:
                         self.right_click = True
 
-            if self.opened_cells >= (self.height * self.width - self.num_of_bombs):  # if all bombs are detected
-                print('ended')
+            if self.opened_cells >= (self.height * self.width - self.num_of_bombs):
+                # if all bombs are detected
                 self.is_finished = True
                 self.display_board()
 
@@ -144,7 +142,6 @@ class PygameMinesweeper(Minesweeper):
                             if cell.is_clicked(self.mouse_pos):
                                 if self.bombs[cell.row][cell.column] != 0:
                                     self.bombs = [[0 for _ in range(self.width)] for _ in range(self.height)]
-                                    print('bomb')
                                 else:
                                     self.dig(cell.row, cell.column)
                                 break
